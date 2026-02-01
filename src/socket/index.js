@@ -1,6 +1,10 @@
 import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
 
 let io = null;
+
+// userId -> socketId
+const userSockets = new Map();
 
 export function initSocket(server) {
   io = new Server(server, {
@@ -9,14 +13,33 @@ export function initSocket(server) {
     }
   });
 
-  io.on("connection", (socket) => {
-    socket.on("join-device", (deviceId) => {
-      socket.join(`device:${deviceId}`);
+  io.use((socket, next) => {
+    try {
+      const token = socket.handshake.auth?.token;
+      if (!token) return next(new Error("No token"));
+
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = payload.userId;
+      next();
+    } catch {
+      next(new Error("Invalid token"));
+    }
+  });
+
+  io.on("connection", socket => {
+    userSockets.set(socket.userId, socket.id);
+
+    socket.on("disconnect", () => {
+      userSockets.delete(socket.userId);
     });
   });
 }
 
-export function emitToDevice(deviceId, event, payload) {
+export function emitToUser(userId, event, payload) {
   if (!io) return;
-  io.to(`device:${deviceId}`).emit(event, payload);
+
+  const socketId = userSockets.get(userId);
+  if (!socketId) return;
+
+  io.to(socketId).emit(event, payload);
 }

@@ -3,16 +3,18 @@ import { handleTelemetry } from "./telemetryHandler.js";
 import { handleAck } from "./ackHandler.js";
 import { handleStatus } from "./statusHandler.js";
 
-let client = null;
+export let mqttClient = null;
 
 export function startMqtt() {
+  if (mqttClient) return mqttClient;
+
   console.log("MQTT ENV CHECK:", {
     EMQX_URL: process.env.EMQX_URL,
     USER: process.env.BACKEND_MQTT_USER,
     HAS_PASS: !!process.env.BACKEND_MQTT_PASS
   });
 
-  client = mqtt.connect(process.env.EMQX_URL, {
+  mqttClient = mqtt.connect(process.env.EMQX_URL, {
     clientId: "backend-server",
     username: process.env.BACKEND_MQTT_USER,
     password: process.env.BACKEND_MQTT_PASS,
@@ -23,15 +25,15 @@ export function startMqtt() {
     rejectUnauthorized: false
   });
 
-  client.on("connect", () => {
+  mqttClient.on("connect", () => {
     console.log("✅ Backend MQTT connected");
 
-    client.subscribe("devices/+/telemetry", { qos: 1 });
-    client.subscribe("devices/+/ack", { qos: 1 });
-    client.subscribe("devices/+/status", { qos: 1 });
+    mqttClient.subscribe("devices/+/telemetry", { qos: 1 });
+    mqttClient.subscribe("devices/+/ack", { qos: 1 });
+    mqttClient.subscribe("devices/+/status", { qos: 1 });
   });
 
-  client.on("message", (topic, payload) => {
+  mqttClient.on("message", (topic, payload) => {
     try {
       if (topic.endsWith("/telemetry")) {
         handleTelemetry(topic, payload);
@@ -52,9 +54,9 @@ export function startMqtt() {
     }
   });
 
-  client.on("error", err => {
+  mqttClient.on("error", err => {
     console.error("❌ MQTT ERROR:", err.message);
   });
 
-  return client;
+  return mqttClient;
 }

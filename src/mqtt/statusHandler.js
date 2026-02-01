@@ -1,5 +1,5 @@
 import Device from "../models/Device.js";
-import { emitToDevice } from "../socket/index.js";
+import { emitToUser } from "../socket/index.js";
 
 export async function handleStatus(topic, payload) {
   let data;
@@ -13,7 +13,7 @@ export async function handleStatus(topic, payload) {
   const [, deviceId] = topic.split("/");
   if (!deviceId || typeof data.online !== "boolean") return;
 
-  await Device.updateOne(
+  const device = await Device.findOneAndUpdate(
     { deviceId },
     {
       $set: {
@@ -21,11 +21,14 @@ export async function handleStatus(topic, payload) {
         lastSeen: new Date()
       }
     },
-    { upsert: true }
+    { new: true }
   );
 
-  // 🔥 WebSocket push to frontend
-  emitToDevice(deviceId, "status", {
+  // device not claimed → no user to notify
+  if (!device?.owner) return;
+
+  // 🔥 WebSocket push to owning user
+  emitToUser(device.owner.toString(), "status", {
     deviceId,
     online: data.online,
     ts: Date.now()
