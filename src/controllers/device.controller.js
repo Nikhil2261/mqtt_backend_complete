@@ -1,4 +1,9 @@
+import crypto from "crypto";
 import Device from "../models/Device.js";
+
+function hashToken(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
 
 /* ================== CLAIM DEVICE ================== */
 export async function claimDevice(req, res) {
@@ -18,21 +23,21 @@ export async function claimDevice(req, res) {
     return res.status(409).json({ error: "Device already claimed" });
   }
 
-  if (device.deviceToken !== deviceToken) {
+  const hashed = hashToken(deviceToken);
+  if (device.deviceToken !== hashed) {
     return res.status(401).json({ error: "Invalid device token" });
   }
 
   device.owner = userId;
   device.claimedAt = new Date();
-
   await device.save();
+
+  console.log("DEVICE CLAIMED:", deviceId, "BY", userId);
 
   res.json({
     message: "Device claimed successfully",
-    device: {
-      deviceId: device.deviceId,
-      claimedAt: device.claimedAt
-    }
+    deviceId: device.deviceId,
+    claimedAt: device.claimedAt
   });
 }
 
@@ -42,7 +47,7 @@ export async function listMyDevices(req, res) {
 
   const devices = await Device.find(
     { owner: userId },
-    { deviceToken: 0 } // 🔥 never send token to frontend
+    { deviceToken: 0 } // 🔥 never expose token
   );
 
   res.json(devices);

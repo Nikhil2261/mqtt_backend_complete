@@ -1,7 +1,7 @@
 import fs from "fs";
 import crypto from "crypto";
 import mongoose from "mongoose";
-import PhysicalDevice from "../src/models/PhysicalDevice.js";
+import Device from "../src/models/Device.js";
 import "dotenv/config";
 
 /* ================= CONFIG ================= */
@@ -15,7 +15,6 @@ if (!INPUT_FILE) {
 
 /* ================= DB CONNECT ================= */
 
-// ❗ FIXED: MONGO_URI (NOT MONGO_URL)
 await mongoose.connect(process.env.MONGO_URL, {
   autoIndex: true
 });
@@ -47,7 +46,7 @@ if (deviceIds.length === 0) {
 
 /* ================= CSV PREP ================= */
 
-// EMQX Built-in Auth CSV format
+// EMQX auth CSV
 const csvLines = ["username,password"];
 
 /* ================= MAIN LOOP ================= */
@@ -59,13 +58,13 @@ for (const deviceId of deviceIds) {
   const tokenHash = hashToken(plainToken);
 
   try {
-    await PhysicalDevice.create({
+    await Device.create({
       deviceId,
-      deviceToken: tokenHash,   // 🔒 HASHED IN DB
-      claimed: false
+      deviceToken: tokenHash,
+      owner: null
     });
 
-    // CSV gets PLAIN token
+    // CSV me PLAIN token
     csvLines.push(`${deviceId},${plainToken}`);
     created++;
   } catch (err) {

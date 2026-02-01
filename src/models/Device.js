@@ -1,25 +1,34 @@
-
-
- import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 const DeviceSchema = new mongoose.Schema(
   {
-    deviceId: { type: String, unique: true, required: true },
+    deviceId: {
+      type: String,
+      unique: true,
+      required: true
+    },
 
-    // 🔥 Ownership
+    // 🔐 Factory generated (HASHED)
+    deviceToken: {
+      type: String,
+      required: true
+    },
+
+    // 👤 Ownership (null until claimed)
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null
     },
 
-    // 🔐 Factory token (hashed recommended later)
-    deviceToken: { type: String, required: true },
-
     claimedAt: Date,
 
-    // Live state
-    online: { type: Boolean, default: false },
+    // Runtime state
+    online: {
+      type: Boolean,
+      default: false
+    },
+
     lastSeen: Date,
 
     // Telemetry snapshot
@@ -31,5 +40,3 @@ const DeviceSchema = new mongoose.Schema(
 );
 
 export default mongoose.model("Device", DeviceSchema);
-
-
