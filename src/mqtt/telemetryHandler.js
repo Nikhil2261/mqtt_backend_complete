@@ -12,7 +12,7 @@ export async function handleTelemetry(topic, payload) {
   const [, deviceId] = topic.split("/");
   if (!deviceId) return;
 
-  /* ================= OTA PROGRESS ================= */
+  /* ========== OTA PROGRESS ========== */
   if (data.type === "ota") {
     const device = await Device.findOne({ deviceId });
     if (!device?.owner) return;
@@ -26,14 +26,28 @@ export async function handleTelemetry(topic, payload) {
     return;
   }
 
-  /* ================= NORMAL TELEMETRY ================= */
-  if (typeof data.states !== "object") return;
+  /* ========== TELEMETRY NORMALIZATION ========== */
+  if (!Array.isArray(data.states)) return;
+
+  const normalizedStates = {};
+  let fan = null;
+
+  for (const s of data.states) {
+    if (s.type === "switch") {
+      normalizedStates[s.pin] = s.status;
+    }
+
+    if (s.type === "fan") {
+      fan = s.speed;
+    }
+  }
 
   const device = await Device.findOneAndUpdate(
     { deviceId },
     {
       $set: {
-        states: data.states,
+        states: normalizedStates,
+        fanSpeed: fan,
         lastSeen: new Date()
       }
     },
@@ -45,6 +59,7 @@ export async function handleTelemetry(topic, payload) {
   emitToUser(device.owner.toString(), "telemetry", {
     deviceId,
     states: device.states,
+    fanSpeed: device.fanSpeed,
     ts: data.ts ?? Date.now()
   });
 }
