@@ -33,7 +33,7 @@ export async function sendDeviceCommand(req, res) {
 
   // 📡 MQTT publish
   mqttClient.publish(
-    `devices/${deviceId}/commands`,
+    `devices/${deviceId}/command`,
     JSON.stringify({ cmdId, ...command }),
     { qos: 1 }
   );

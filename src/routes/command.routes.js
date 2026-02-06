@@ -6,4 +6,7 @@ const router = express.Router();
 
 router.post("/:deviceId/command", requireAuth, sendDeviceCommand);
 
+
+
+
 export default router;

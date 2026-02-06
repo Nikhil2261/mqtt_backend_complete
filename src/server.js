@@ -1,18 +1,3 @@
-// import "dotenv/config";
-// import app from "./app.js";
-// import { connectDB } from "./db.js";
-// import { startMqtt } from "./mqtt/mqttClient.js";
-
-// const PORT = process.env.PORT || 10000;
-
-// await connectDB();
-// startMqtt();
-
-// app.listen(PORT, () => {
-//   console.log("Backend running on port", PORT);
-// });
-
-
 
 import "dotenv/config";
 import http from "http";

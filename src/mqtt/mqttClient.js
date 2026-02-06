@@ -25,6 +25,7 @@ export function startMqtt() {
     rejectUnauthorized: false
   });
 
+  
   mqttClient.on("connect", () => {
     console.log("✅ Backend MQTT connected");
 
