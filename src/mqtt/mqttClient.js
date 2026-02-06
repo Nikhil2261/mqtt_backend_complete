@@ -20,7 +20,7 @@ export function startMqtt() {
     password: process.env.BACKEND_MQTT_PASS,
     protocol: "mqtts",
     keepalive: 60,
-    clean: true,
+    clean: false,
     reconnectPeriod: 5000,
     rejectUnauthorized: false
   });

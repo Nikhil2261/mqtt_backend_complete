@@ -32,14 +32,22 @@ export async function sendDeviceCommand(req, res) {
   });
 
   // 📡 MQTT publish
-  mqttClient.publish(
-    `devices/${deviceId}/command`,
-    JSON.stringify({ cmdId, ...command }),
-    { qos: 1 }
-  );
-
-  res.json({
-    cmdId,
-    status: "pending"
-  });
-}
+  const topic = `devices/${deviceId}/command`;
+    const payload = { cmdId, ...command };
+  
+    console.log("[API] Publishing MQTT command", {
+      topic,
+      payload
+    });
+  
+    mqttClient.publish(
+      topic,
+      JSON.stringify(payload),
+      { qos: 1 }
+    );
+  
+    res.json({
+      cmdId,
+      status: "pending"
+    });
+  }
