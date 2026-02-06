@@ -32,7 +32,7 @@ export async function sendDeviceCommand(req, res) {
   });
 
   // 📡 MQTT publish
-  const topic = `devices/${deviceId}/command`;
+  const topic = `devices/${deviceId}/commands`;
     const payload = { cmdId, ...command };
   
     console.log("[API] Publishing MQTT command", {
