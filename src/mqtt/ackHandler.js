@@ -21,8 +21,11 @@ export async function handleAck(topic, payload) {
     },
     {
       $set: {
-        status: "done",
-        ackAt: new Date()
+        status: data.status === "failed" ? "failed" : "done",
+      ackAt: new Date(),
+      failedReason: data.status === "failed" ? "device_reject" : undefined
+        // status: "done",
+        // ackAt: new Date()
       }
     }
   );
@@ -36,7 +39,8 @@ export async function handleAck(topic, payload) {
   emitToUser(device.owner.toString(), "ack", {
     deviceId,
     cmdId: data.cmdId,
-    status: "done",
+    status: data.status,
+    // status: "done",
     ts: Date.now()
   });
 }
