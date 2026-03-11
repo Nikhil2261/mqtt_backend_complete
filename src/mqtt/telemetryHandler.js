@@ -120,6 +120,7 @@ export async function handleTelemetry(topic, payload) {
       $set: {
         states: normalizedStates,
         fanSpeed: fan,
+        firmware: data.fw,
         lastSeen: new Date()
       }
     },
