@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes.js";
 import deviceRoutes from "./routes/device.routes.js";
 import commandRoutes from "./routes/command.routes.js";
 import otaRoutes from "./routes/ota.routes.js";
+import firmwareRoutes from "./routes/firmware.routes.js";
 
 
 
@@ -31,6 +32,8 @@ app.use("/auth", authRoutes);
 app.use("/devices", deviceRoutes);
 
 app.use("/devices", otaRoutes);
+
+app.use("/firmware-registry", firmwareRoutes);
 
 
 
