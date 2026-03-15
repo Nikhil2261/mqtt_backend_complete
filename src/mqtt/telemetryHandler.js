@@ -95,24 +95,47 @@ export async function handleTelemetry(topic, payload) {
   }
 
   /* ========== TELEMETRY NORMALIZATION ========== */
-  if (!Array.isArray(data.states)) return;
+  // if (!Array.isArray(data.states)) return;
 
-  const normalizedStates = [];
-  let fan = null;
+  // const normalizedStates = [];
+  // let fan = null;
 
-  for (const s of data.states) {
-    if (s.type === "switch") {
-      normalizedStates.push({
-        type: "switch",
-        pin: s.pin,
-        status: s.status
-      });
-    }
+  // for (const s of data.states) {
+  //   if (s.type === "switch") {
+  //     normalizedStates.push({
+  //       type: "switch",
+  //       pin: s.pin,
+  //       status: s.status
+  //     });
+  //   }
 
-    if (s.type === "fan") {
-      fan = s.speed;
-    }
+  //   if (s.type === "fan") {
+  //     fan = s.speed;
+  //   }
+  // }
+
+  /* TELEMETRY NORMALIZATION */
+
+if (!Array.isArray(data.states)) {
+  data.states = [];
+}
+
+const normalizedStates = [];
+let fan = null;
+
+for (const s of data.states) {
+  if (s.type === "switch") {
+    normalizedStates.push({
+      type: "switch",
+      pin: s.pin,
+      status: s.status
+    });
   }
+
+  if (s.type === "fan") {
+    fan = s.speed;
+  }
+}
 
   const device = await Device.findOneAndUpdate(
     { deviceId },
@@ -133,6 +156,7 @@ export async function handleTelemetry(topic, payload) {
     deviceId,
     states: device.states,
     fanSpeed: device.fanSpeed,
+    firmware: device.firmware,
     ts: data.ts ?? Date.now()
   });
 }

@@ -32,7 +32,9 @@ const DeviceSchema = new mongoose.Schema(
     lastSeen: Date,
 
     // Telemetry snapshot
-    states: mongoose.Schema.Types.Mixed
+    states: mongoose.Schema.Types.Mixed,
+    fanSpeed: Number,
+    firmware: String
   },
   {
     timestamps: true
