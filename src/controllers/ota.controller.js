@@ -33,6 +33,10 @@ export async function triggerOta(req, res) {
     command,
     status: "pending"
   });
+  console.log("MQTT OTA publish", {
+  topic: `devices/${deviceId}/commands`,
+  payload: { cmdId, ...command }
+});
 
   mqttClient.publish(
     `devices/${deviceId}/commands`,
