@@ -1,17 +1,83 @@
+// import Command from "../models/Command.js";
+// import Device from "../models/Device.js";
+// import { emitToUser } from "../socket/index.js";
+
+// export async function handleAck(topic, payload) {
+//   let data;
+//   try {
+//     data = JSON.parse(payload.toString());
+//   } catch {
+//     return;
+//   }
+
+//   const [, deviceId] = topic.split("/");
+//   if (!deviceId || !data.cmdId) return;
+
+//   const res = await Command.updateOne(
+//     {
+//       deviceId,
+//       cmdId: data.cmdId,
+//       status: { $ne: "done" }
+//     },
+//     {
+//       $set: {
+//              status: data.status === "failed" ? "failed" : "done",
+//             ackAt: new Date()
+//             },
+//             $unset: data.status === "failed" ? {} : { failedReason: "" }
+//       // $set: {
+//       //   status: data.status === "failed" ? "failed" : "done",
+//       // ackAt: new Date(),
+//       // failedReason: data.status === "failed" ? "device_reject" : undefined
+
+      
+//       //   // status: "done",
+//       //   // ackAt: new Date()
+//       // }
+//     }
+//   );
+
+//   // duplicate / late ACK
+//   if (res.matchedCount === 0) return;
+
+//   const device = await Device.findOne({ deviceId });
+//   if (!device?.owner) return;
+
+//   emitToUser(device.owner.toString(), "ack", {
+//     deviceId,
+//     cmdId: data.cmdId,
+//     status: data.status,
+//     // status: "done",
+//     ts: Date.now()
+//   });
+// }
+
+
+
 import Command from "../models/Command.js";
 import Device from "../models/Device.js";
 import { emitToUser } from "../socket/index.js";
 
 export async function handleAck(topic, payload) {
+
   let data;
+
   try {
     data = JSON.parse(payload.toString());
   } catch {
     return;
   }
 
-  const [, deviceId] = topic.split("/");
+  const parts = topic.split("/");
+  const deviceId = parts[1];
+
   if (!deviceId || !data.cmdId) return;
+
+  let status = "done";
+
+  if (data.status === "failed") {
+    status = "failed";
+  }
 
   const res = await Command.updateOne(
     {
@@ -21,33 +87,24 @@ export async function handleAck(topic, payload) {
     },
     {
       $set: {
-             status: data.status === "failed" ? "failed" : "done",
-            ackAt: new Date()
-            },
-            $unset: data.status === "failed" ? {} : { failedReason: "" }
-      // $set: {
-      //   status: data.status === "failed" ? "failed" : "done",
-      // ackAt: new Date(),
-      // failedReason: data.status === "failed" ? "device_reject" : undefined
-
-      
-      //   // status: "done",
-      //   // ackAt: new Date()
-      // }
+        status,
+        ackAt: new Date(),
+        failedReason: status === "failed" ? "device_reject" : null
+      }
     }
   );
 
-  // duplicate / late ACK
   if (res.matchedCount === 0) return;
 
   const device = await Device.findOne({ deviceId });
+
   if (!device?.owner) return;
 
   emitToUser(device.owner.toString(), "ack", {
     deviceId,
     cmdId: data.cmdId,
-    status: data.status,
-    // status: "done",
+    status,
     ts: Date.now()
   });
+
 }

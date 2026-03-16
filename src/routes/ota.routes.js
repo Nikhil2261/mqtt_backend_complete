@@ -1,9 +1,10 @@
-import express from "express";
-import { requireAuth } from "../middleware/auth.middleware.js";
-import { triggerOta } from "../controllers/ota.controller.js";
+// import express from "express";
+// import { requireAuth } from "../middleware/auth.middleware.js";
+// import { triggerOta } from "../controllers/ota.controller.js";
 
-const router = express.Router();
+// const router = express.Router();
 
-router.post("/:deviceId/ota", requireAuth, triggerOta);
+// router.post("/:deviceId/ota", requireAuth, triggerOta);
 
-export default router;
+// export default router;
+  
