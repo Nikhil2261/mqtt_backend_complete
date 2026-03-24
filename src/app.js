@@ -8,7 +8,7 @@ import deviceRoutes from "./routes/device.routes.js";
 import commandRoutes from "./routes/command.routes.js";
 //import otaRoutes from "./routes/ota.routes.js";
 import firmwareRoutes from "./routes/firmware.routes.js";
-
+import pingRoutes from "./routes/ping.routes.js";
 
 
 const app = express();
@@ -35,7 +35,7 @@ app.use("/devices", deviceRoutes);
 
 app.use("/firmware-registry", firmwareRoutes);
 
-
+app.use("/", pingRoutes);
 
 app.use("/devices", commandRoutes);
 /* ========================================================= */
