@@ -1,5 +1,6 @@
 import crypto from "crypto";
-import PhysicalDevice from "../models/PhysicalDevice.js";
+//import PhysicalDevice from "../models/PhysicalDevice.js";
+import Device from "../models/Device.js";
 
 function sha256(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -14,7 +15,8 @@ export async function emqxAuth(req, res) {
   }
 
   // username = deviceId
-  const device = await PhysicalDevice.findOne({ deviceId: username });
+  //const device = await PhysicalDevice.findOne({ deviceId: username });
+  const device = await Device.findOne({ deviceId: username });
 
   if (!device) {
     return res.json({ result: "deny" });

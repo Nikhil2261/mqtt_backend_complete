@@ -19,7 +19,8 @@ export function emqxAcl(req, res) {
   // Device subscribing to commands
   if (
     action === "subscribe" &&
-    topic === `devices/${username}/command`
+    //topic === `devices/${username}/command`
+    topic === `devices/${username}/commands`
   ) {
     return res.json({ result: "allow" });
   }

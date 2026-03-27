@@ -1,36 +1,3 @@
-// import Firmware from "../models/Firmware.js";
-// import Device from "../models/Device.js";
-// import crypto from "crypto";
-// import { mqttClient } from "../mqtt/mqttClient.js";
-
-// export async function otaRolloutWorker() {
-
-//   const latest = await Firmware
-//     .findOne()
-//     .sort({ createdAt: -1 });
-
-//   if (!latest) return;
-
-//   const devices = await Device
-//     .find({ firmware: { $ne: latest.version } })
-//     .limit(50); // batch rollout
-
-//   for (const d of devices) {
-
-//     const cmdId = crypto.randomUUID();
-
-//     mqttClient.publish(
-//       `devices/${d.deviceId}/commands`,
-//       JSON.stringify({
-//         cmdId,
-//         type: "ota",
-//         version: latest.version,
-//         url: latest.url
-//       }),
-//       { qos: 1 }
-//     );
-//   }
-// }
 
 import Firmware from "../models/Firmware.js";
 import Device from "../models/Device.js";
@@ -48,10 +15,13 @@ export async function otaRolloutWorker() {
 
     if (!latest) return;
 
+
     const devices = await Device.find({
       firmware: { $ne: latest.version },
-      online: true
+      online: true,
+      "ota.status": { $nin: ["pending", "updating"] }
     }).limit(50);
+    
 
     for (const d of devices) {
 
@@ -76,6 +46,11 @@ export async function otaRolloutWorker() {
         `devices/${d.deviceId}/commands`,
         JSON.stringify(payload),
         { qos: 1, retain: false }
+      ); 
+
+      await Device.updateOne(                          
+        { deviceId: d.deviceId },
+        { $set: { "ota.status": "pending", "ota.lastAttempt": new Date() } }
       );
 
       console.log("OTA sent to", d.deviceId);

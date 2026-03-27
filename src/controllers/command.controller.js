@@ -6,6 +6,7 @@ import { mqttClient } from "../mqtt/mqttClient.js";
 
 /* ================== SEND COMMAND ================== */
 export async function sendDeviceCommand(req, res) {
+  try{
   const { deviceId } = req.params;
   const userId = req.user.userId;
   const command = req.body;
@@ -91,4 +92,7 @@ export async function sendDeviceCommand(req, res) {
     cmdId,
     status: "pending"
   });
-}
+}  catch (err) {
+    console.error("[sendDeviceCommand] Error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  } }  

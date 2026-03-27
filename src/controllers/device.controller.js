@@ -6,7 +6,7 @@ function hashToken(token) {
 }
 
 /* ================== CLAIM DEVICE ================== */
-export async function claimDevice(req, res) {
+export async function claimDevice(req, res) { try{
   const { deviceId, deviceToken } = req.body;
   const userId = req.user.userId;
 
@@ -39,10 +39,13 @@ export async function claimDevice(req, res) {
     deviceId: device.deviceId,
     claimedAt: device.claimedAt
   });
-}
+}catch (err) {
+    console.error("[sendDeviceCommand] Error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  } }
 
 /* ================== LIST MY DEVICES ================== */
-export async function listMyDevices(req, res) {
+export async function listMyDevices(req, res) { try{
   const userId = req.user.userId;
 
   const devices = await Device.find(
@@ -51,4 +54,7 @@ export async function listMyDevices(req, res) {
   );
 
   res.json(devices);
-}
+} catch (err) {
+    console.error("[sendDeviceCommand] Error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }}
