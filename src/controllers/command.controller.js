@@ -6,93 +6,109 @@ import { mqttClient } from "../mqtt/mqttClient.js";
 
 /* ================== SEND COMMAND ================== */
 export async function sendDeviceCommand(req, res) {
-  try{
-  const { deviceId } = req.params;
-  const userId = req.user.userId;
-  const command = req.body;
+  try {
+    const { deviceId } = req.params;
+    const userId = req.user.userId;
+    const command = req.body;
 
-  // 🔐 Basic validation
-  if (!command?.type) {
-    return res.status(400).json({ error: "Command type missing" });
-  }
-
-  // 🔐 Ownership check
-  const device = await Device.findOne({ deviceId, owner: userId });
-  if (!device) {
-    return res.status(404).json({ error: "Device not found or not owned" });
-  }
-
-  const cmdId = crypto.randomUUID();
-
-  /* ================== BUILD SAFE PAYLOAD ================== */
-
-  let payload;
-
-  // ✔ SWITCH = TOGGLE ONLY
-  if (command.type === "switch") {
-
-    if (typeof command.pin !== "number") {
-      return res.status(400).json({ error: "Pin missing for switch command" });
+    // 🔐 Basic validation
+    if (!command?.type) {
+      return res.status(400).json({ error: "Command type missing" });
     }
 
-    payload = {
-      cmdId,
-      type: "switch",
-      pin: command.pin,
-      action: "toggle"
-    };
-  }
-
-  // ✔ FAN = SET SPEED
-  else if (command.type === "fan") {
-
-    if (typeof command.value !== "number") {
-      return res.status(400).json({ error: "Fan speed missing" });
+    // 🔐 Ownership check
+    const device = await Device.findOne({ deviceId, owner: userId });
+    if (!device) {
+      return res.status(404).json({ error: "Device not found or not owned" });
     }
 
-    payload = {
+    const cmdId = crypto.randomUUID();
+
+    /* ================== BUILD SAFE PAYLOAD ================== */
+
+    let payload;
+
+    // ✔ SWITCH = TOGGLE ONLY
+    if (command.type === "switch") {
+
+      if (typeof command.pin !== "number") {
+        return res.status(400).json({ error: "Pin missing for switch command" });
+      }
+
+      payload = {
+        cmdId,
+        type: "switch",
+        pin: command.pin,
+        action: "toggle"
+      };
+    }
+
+    // ✔ FAN = SET SPEED
+    else if (command.type === "fan") {
+
+      if (typeof command.value !== "number") {
+        return res.status(400).json({ error: "Fan speed missing" });
+      }
+
+      payload = {
+        cmdId,
+        type: "fan",
+        value: command.value
+      };
+    }
+
+
+    // command.controller.js mein "else" se pehle add karo:
+
+    else if (command.type === "wifi-update") {
+      if (!command.ssid || !command.password) {
+        return res.status(400).json({ error: "SSID or password missing" });
+      }
+
+      payload = {
+        cmdId,
+        type: "wifi-update",
+        ssid: command.ssid,
+        password: command.password
+      };
+    }
+    else {
+      return res.status(400).json({ error: "Invalid command type" });
+    }
+
+    /* ================== SAVE COMMAND ================== */
+
+    await Command.create({
+      deviceId,
       cmdId,
-      type: "fan",
-      value: command.value
-    };
-  }
+      type: payload.type,
+      command: payload,
+      status: "pending"
+    });
 
-  else {
-    return res.status(400).json({ error: "Invalid command type" });
-  }
+    /* ================== MQTT PUBLISH ================== */
 
-  /* ================== SAVE COMMAND ================== */
+    const topic = `devices/${deviceId}/commands`;
 
-  await Command.create({
-    deviceId,
-    cmdId,
-    type: payload.type,
-    command: payload,
-    status: "pending"
-  });
+    console.log("[API] Publishing MQTT command", {
+      topic,
+      payload
+    });
 
-  /* ================== MQTT PUBLISH ================== */
+    mqttClient.publish(
+      topic,
+      JSON.stringify(payload),
+      { qos: 1 }
+    );
 
-  const topic = `devices/${deviceId}/commands`;
+    /* ================== RESPONSE ================== */
 
-  console.log("[API] Publishing MQTT command", {
-    topic,
-    payload
-  });
-
-  mqttClient.publish(
-    topic,
-    JSON.stringify(payload),
-    { qos: 1 }
-  );
-
-  /* ================== RESPONSE ================== */
-
-  res.json({
-    cmdId,
-    status: "pending"
-  });
-}  catch (err) {
+    res.json({
+      cmdId,
+      status: "pending"
+    });
+  } catch (err) {
     console.error("[sendDeviceCommand] Error:", err);
     res.status(500).json({ error: "Internal server error" });
-  } }  
+  }
+}  
