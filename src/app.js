@@ -11,7 +11,7 @@ import pingRoutes from "./routes/ping.routes.js";
 
 const app = express();
 
-// ✅ CORS — sirf tumhari app ko allow karo
+// ✅ CORS — only allow frontend(my app) origins
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(",") || [],
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -20,7 +20,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// ✅ Rate Limiting — sirf auth routes pe
+// ✅ Rate Limiting — limit auth endpoints to prevent brute-force attacks
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -32,10 +32,15 @@ const __dirname = path.dirname(__filename);
 
 app.use("/firmware", express.static(path.join(__dirname, "../firmware")));
 
-app.use("/auth", authLimiter, authRoutes);   // ← limiter laga diya
-app.use("/devices", deviceRoutes);
-app.use("/firmware-registry", firmwareRoutes);
-app.use("/", pingRoutes);
-app.use("/devices", commandRoutes);
+// app.use("/auth", authLimiter, authRoutes);   // ← limiter laga diya
+// app.use("/devices", deviceRoutes);
+// app.use("/firmware-registry", firmwareRoutes);
+// app.use("/", pingRoutes);
+// app.use("/devices", commandRoutes);
+app.use("/api/v1/auth", authLimiter, authRoutes);
+app.use("/api/v1/devices", deviceRoutes);
+app.use("/api/v1/devices", commandRoutes);
+app.use("/api/v1/firmware-registry", firmwareRoutes);
+app.use("/", pingRoutes); 
 
 export default app;
