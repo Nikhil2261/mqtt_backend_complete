@@ -45,16 +45,51 @@ export async function claimDevice(req, res) { try{
   } }
 
 /* ================== LIST MY DEVICES ================== */
-export async function listMyDevices(req, res) { try{
-  const userId = req.user.userId;
+// export async function listMyDevices(req, res) { try{
+//   const userId = req.user.userId;
 
-  const devices = await Device.find(
-    { owner: userId },
-    { deviceToken: 0 } // 🔥 never expose token
-  );
+//   const devices = await Device.find(
+//     { owner: userId },
+//     { deviceToken: 0 } // 🔥 never expose token
+//   );
 
-  res.json(devices);
-} catch (err) {
-    console.error("[sendDeviceCommand] Error:", err);
+//   res.json(devices);
+// } catch (err) {
+//     console.error("[sendDeviceCommand] Error:", err);
+//     res.status(500).json({ error: "Internal server error" });
+//   }}
+export async function listMyDevices(req, res) {
+  try {
+    const userId = req.user.userId;
+
+    const devices = await Device.find(
+      { owner: userId },
+      { deviceToken: 0 }
+    );
+
+    const formatted = devices.map(d => ({
+      deviceId: d.deviceId,
+      online: d.online,
+      lastSeen: d.lastSeen,
+
+      // ✅ 🔥 MAIN FIX
+      states: Array.isArray(d.states) && d.states.length
+        ? d.states
+        : [
+            { type: "switch", pin: 4, status: "off" },
+            { type: "switch", pin: 5, status: "off" },
+            { type: "switch", pin: 16, status: "off" },
+            { type: "switch", pin: 17, status: "off" }
+          ],
+
+      ota: d.ota,
+      firmware: d.firmware
+    }));
+
+    res.json(formatted);
+
+  } catch (err) {
+    console.error("[listMyDevices] Error:", err);
     res.status(500).json({ error: "Internal server error" });
-  }}
+  }
+}
